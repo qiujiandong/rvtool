@@ -1,0 +1,37 @@
+#!/bin/sh
+set -eu
+
+case "${0##*/}" in
+  riscv64-unknown-elf-clang|riscv64-unknown-elf-clang++)
+    target=riscv64-unknown-elf
+    prefix=/opt/rvtool/elf
+    ;;
+  riscv64-unknown-linux-gnu-clang|riscv64-unknown-linux-gnu-clang++)
+    target=riscv64-unknown-linux-gnu
+    prefix=/opt/rvtool/linux
+    ;;
+  *)
+    echo "unknown rvtool clang wrapper: ${0##*/}" >&2
+    exit 64
+    ;;
+esac
+
+case "${0##*/}" in
+  *++) compiler=/opt/rvtool/llvm/bin/clang++ ;;
+  *) compiler=/opt/rvtool/llvm/bin/clang ;;
+esac
+
+sysroot=$("$prefix/bin/$target-gcc" --print-sysroot)
+
+link=yes
+for arg do
+  case "$arg" in
+    -c|-S|-E|-fsyntax-only) link=no ;;
+  esac
+done
+
+if [ "$link" = yes ]; then
+  set -- -rtlib=libgcc -stdlib=libstdc++ "$@"
+fi
+
+exec "$compiler" --target="$target" --gcc-toolchain="$prefix" --sysroot="$sysroot" "$@"

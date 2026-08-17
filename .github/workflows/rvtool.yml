@@ -1,0 +1,62 @@
+name: Build rvtool Docker Image
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: Upstream riscv-gnu-toolchain release tag
+        required: false
+        type: string
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: [self-hosted, linux, x64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select upstream release
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REQUESTED_REF: ${{ inputs.upstream_ref }}
+        run: |
+          if [ -n "$REQUESTED_REF" ]; then ref=$REQUESTED_REF
+          else ref=$(gh release view --repo riscv-collab/riscv-gnu-toolchain --json tagName --jq .tagName); fi
+          test -n "$ref"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check published image
+        id: published
+        env:
+          IMAGE: ghcr.io/${{ github.repository_owner }}/rvtool
+        run: |
+          if docker manifest inspect "$IMAGE:${{ steps.upstream.outputs.ref }}" >/dev/null 2>&1; then
+            echo 'skip=true' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and publish image
+        if: steps.published.outputs.skip != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64
+          push: true
+          build-args: RISCV_GNU_TOOLCHAIN_REF=${{ steps.upstream.outputs.ref }}
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rvtool:latest
+            ghcr.io/${{ github.repository_owner }}/rvtool:${{ steps.upstream.outputs.ref }}
