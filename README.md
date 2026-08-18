@@ -1,14 +1,80 @@
-# RISCV Container
+# RISC-V Toolchain
 
-[![Build rvgnu Docker Image](https://github.com/qiujiandong/riscv-container/actions/workflows/rvgnu.yml/badge.svg)](https://github.com/qiujiandong/riscv-container/actions/workflows/rvgnu.yml)
+[![Build rvtool Docker Image](https://github.com/qiujiandong/rvtool/actions/workflows/rvtool.yml/badge.svg)](https://github.com/qiujiandong/rvtool/actions/workflows/rvtool.yml)
+[![GHCR](https://img.shields.io/badge/GHCR-rvtool-181717?logo=github)](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool)
 
-## Workflow
+Source-built RISC-V toolchains packaged as a Docker image. The image provides
+multilib GNU GCC toolchains for ELF and Linux targets, plus host Clang/LLD with
+RISC-V wrappers. It intentionally does not include QEMU.
 
-How I update the `rvgnu` docker image in this repo?
+## Images
 
-1. Every a period of time, I'll build the tools manually and upload them to
-the release page with the version number.
-2. I'll maintain the default tools' version in `Dockerfile` to keep them
-as latest as posible.
-3. The tags on `main` branch will note github workflow to build the image with
-dedicated version.
+| Image | Tag | Purpose |
+| --- | --- | --- |
+| `ghcr.io/qiujiandong/rvtool` | `latest` | Most recently published upstream toolchain release. |
+| `ghcr.io/qiujiandong/rvtool` | `<upstream-release-tag>` | Immutable image built from that `riscv-gnu-toolchain` Release. |
+
+Pull and open a shell:
+
+```sh
+docker run --rm -it -v "$PWD:/work" -w /work ghcr.io/qiujiandong/rvtool:latest bash
+```
+
+## Included tools
+
+The following are the primary tools; the image also includes supporting GNU
+binutils and runtime commands.
+
+| Category | Commands | Notes |
+| --- | --- | --- |
+| Bare-metal GNU toolchain | `riscv64-unknown-elf-gcc`, `riscv64-unknown-elf-g++` | Multilib GCC for ELF targets. |
+| Linux GNU toolchain | `riscv64-unknown-linux-gnu-gcc`, `riscv64-unknown-linux-gnu-g++` | Multilib GCC for Linux targets. |
+| LLVM toolchain | `clang`, `clang++`, `ld.lld` | Host LLVM tools with RISC-V targets enabled. |
+| RISC-V Clang wrappers | `riscv64-unknown-elf-clang`, `riscv64-unknown-elf-clang++`, `riscv64-unknown-linux-gnu-clang`, `riscv64-unknown-linux-gnu-clang++` | Select the matching target and GNU sysroot automatically. |
+| Build tools | `make`, `cmake`, `ninja`, `python3`, and `pkg-config` | Available for building projects in the container. |
+
+GNU GCC multilib variants available in this image:
+
+ELF:
+
+- `rv32i/ilp32`
+- `rv32im/ilp32`
+- `rv32iac/ilp32`
+- `rv32imac/ilp32`
+- `rv32imafc/ilp32f`
+- `rv64imac/lp64`
+- `rv64imafdc/lp64d`
+
+Linux:
+
+- `rv32imac/ilp32`
+- `rv32imafdc/ilp32d`
+- `rv64imac/lp64`
+- `rv64imafdc/lp64d`
+
+Clang is built with `riscv32`, `riscv32be`, `riscv64`, and `riscv64be`
+backends (as well as host `x86` and `x86-64`). The provided wrappers configure
+GNU toolchains and sysroots only for `riscv64-unknown-elf` and
+`riscv64-unknown-linux-gnu`.
+
+QEMU is not included; run the produced binaries with an emulator or target
+environment supplied by your project.
+
+## Build locally
+
+Choose an upstream `riscv-gnu-toolchain` Release tag and run:
+
+```sh
+docker build --network=host \
+  --build-arg RISCV_GNU_TOOLCHAIN_REF=<upstream-release-tag> \
+  -t rvtool:local .
+```
+
+`--network=host` lets the build access a proxy running on the Docker host.
+
+## Publishing
+
+Pushing to `main` or running `workflow_dispatch` starts the self-hosted GitHub
+Actions workflow. It selects the latest upstream Release, skips an already
+published version tag, and otherwise publishes both `latest` and the upstream
+release tag to GHCR.
