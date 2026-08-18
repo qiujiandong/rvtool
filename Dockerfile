@@ -16,7 +16,8 @@ RUN test -n "$RISCV_GNU_TOOLCHAIN_REF" && test -n "$RISCV_GNU_TOOLCHAIN_URL" && 
     https://sourceware.org/git/glibc.git && \
     git config --global url."https://github.com/mirror/newlib-cygwin.git".insteadOf \
     https://sourceware.org/git/newlib-cygwin.git && \
-    git clone --depth=1 --branch "$RISCV_GNU_TOOLCHAIN_REF" "$RISCV_GNU_TOOLCHAIN_URL" /src
+    git clone --depth=1 --branch "$RISCV_GNU_TOOLCHAIN_REF" "$RISCV_GNU_TOOLCHAIN_URL" /src && \
+    cd /src && git submodule update --init --depth=1 llvm
 
 RUN mkdir /build-elf && cd /build-elf && \
     /src/configure --prefix=/opt/rvtool/elf --enable-multilib --disable-gdb \
