@@ -12,8 +12,8 @@ RISC-V wrappers. It intentionally does not include QEMU.
 <!-- images:start -->
 | Image | Architecture | Upstream release | Size |
 | --- | --- | --- | --- |
-| [`ghcr.io/qiujiandong/rvtool:latest`](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool) | `linux/amd64` | [`2026.07.15`](https://github.com/riscv-collab/riscv-gnu-toolchain/releases/tag/2026.07.15) | ~1.46 GB |
-| [`ghcr.io/qiujiandong/rvtool:2026.07.15`](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool) | `linux/amd64` | [`2026.07.15`](https://github.com/riscv-collab/riscv-gnu-toolchain/releases/tag/2026.07.15) | ~1.46 GB |
+| [`ghcr.io/qiujiandong/rvtool:latest`](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool) | `linux/amd64` | [`2026.07.15`](https://github.com/riscv-collab/riscv-gnu-toolchain/releases/tag/2026.07.15) | 1.57 GB |
+| [`ghcr.io/qiujiandong/rvtool:2026.07.15`](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool) | `linux/amd64` | [`2026.07.15`](https://github.com/riscv-collab/riscv-gnu-toolchain/releases/tag/2026.07.15) | 1.57 GB |
 <!-- images:end -->
 
 After publishing, refresh this table with an authenticated `gh` session (or set
