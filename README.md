@@ -16,10 +16,11 @@ RISC-V wrappers. It intentionally does not include QEMU.
 | [`ghcr.io/qiujiandong/rvtool:2026.07.15`](https://github.com/qiujiandong/rvtool/pkgs/container/rvtool) | `linux/amd64` | [`2026.07.15`](https://github.com/riscv-collab/riscv-gnu-toolchain/releases/tag/2026.07.15) | ~1.46 GB |
 <!-- images:end -->
 
-After publishing, refresh this table with a token that has `read:packages`:
+After publishing, refresh this table with an authenticated `gh` session (or set
+`GH_TOKEN` to a token that has `read:packages`):
 
 ```sh
-GH_TOKEN=... scripts/update-readme-images.sh
+scripts/update-readme-images.sh
 ```
 
 Pull and open a shell:

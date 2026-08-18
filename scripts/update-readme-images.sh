@@ -1,8 +1,6 @@
 #!/bin/sh
 set -eu
 
-: "${GH_TOKEN:?set GH_TOKEN to a token with read:packages access}"
-
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 README=${README:-$repo_root/README.md}
 IMAGE=${IMAGE:-ghcr.io/qiujiandong/rvtool}
