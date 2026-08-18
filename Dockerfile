@@ -16,10 +16,7 @@ RUN test -n "$RISCV_GNU_TOOLCHAIN_REF" && test -n "$RISCV_GNU_TOOLCHAIN_URL" && 
     https://sourceware.org/git/glibc.git && \
     git config --global url."https://github.com/mirror/newlib-cygwin.git".insteadOf \
     https://sourceware.org/git/newlib-cygwin.git && \
-    git config --global url."https://gnu.googlesource.com/dejagnu".insteadOf \
-    https://git.savannah.gnu.org/git/dejagnu.git && \
-    git clone --depth=1 --branch "$RISCV_GNU_TOOLCHAIN_REF" --recurse-submodules \
-    --shallow-submodules "$RISCV_GNU_TOOLCHAIN_URL" /src
+    git clone --depth=1 --branch "$RISCV_GNU_TOOLCHAIN_REF" "$RISCV_GNU_TOOLCHAIN_URL" /src
 
 RUN mkdir /build-elf && cd /build-elf && \
     /src/configure --prefix=/opt/rvtool/elf --enable-multilib --disable-gdb \
