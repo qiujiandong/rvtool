@@ -1,1 +1,3 @@
-*.tar.xz
+docs/superpowers/
+.codebase-memory/
+tests/
