@@ -46,31 +46,30 @@ PY
 
   while IFS= read -r tag; do
     docker manifest inspect "$IMAGE:$tag" >"$tmp_dir/index.json"
-    digest=$(python3 - "$tmp_dir/index.json" "$ARCHITECTURE" <<'PY'
+    python3 - "$tmp_dir/index.json" "$ARCHITECTURE" >"$tmp_dir/platforms" <<'PY'
 import json
 import sys
 
 manifest = json.load(open(sys.argv[1]))
-if "layers" in manifest:
-    print()
-    raise SystemExit
-
-os_name, architecture = sys.argv[2].split("/", 1)
-for descriptor in manifest.get("manifests", []):
-    platform = descriptor.get("platform", {})
-    if platform.get("os") == os_name and platform.get("architecture") == architecture:
-        print(descriptor["digest"])
-        break
+if "manifests" in manifest:
+    for descriptor in manifest["manifests"]:
+        platform = descriptor.get("platform", {})
+        os_name = platform.get("os")
+        architecture = platform.get("architecture")
+        if os_name and architecture and os_name != "unknown" and architecture != "unknown":
+            print(f"{os_name}/{architecture}\t{descriptor['digest']}")
 else:
-    raise SystemExit(f"no {sys.argv[2]} manifest")
+    print(f"{sys.argv[2]}\t")
 PY
-)
-    if [ -n "$digest" ]; then
-      docker manifest inspect "$IMAGE@$digest" >"$tmp_dir/manifest.json"
-    else
-      cp "$tmp_dir/index.json" "$tmp_dir/manifest.json"
-    fi
-    size=$(python3 - "$tmp_dir/manifest.json" <<'PY'
+
+    for image_tag in $(test "$tag" = "$first_tag" && printf 'latest %s' "$tag" || printf '%s' "$tag"); do
+      while IFS="$(printf '\t')" read -r architecture digest; do
+        if [ -n "$digest" ]; then
+          docker manifest inspect "$IMAGE@$digest" >"$tmp_dir/manifest.json"
+        else
+          cp "$tmp_dir/index.json" "$tmp_dir/manifest.json"
+        fi
+        size=$(python3 - "$tmp_dir/manifest.json" <<'PY'
 import json
 import sys
 
@@ -81,11 +80,10 @@ else:
     print(f"{size / 1_000_000:.0f} MB")
 PY
 )
-
-    for image_tag in $(test "$tag" = "$first_tag" && printf 'latest %s' "$tag" || printf '%s' "$tag"); do
-      printf '| [`%s:%s`](%s) | `%s` | [`%s`](%s/%s) | %s |\n' \
-        "$IMAGE" "$image_tag" "$PACKAGE_PAGE" "$ARCHITECTURE" "$tag" \
-        "$UPSTREAM_RELEASES" "$tag" "$size"
+        printf '| [`%s:%s`](%s) | `%s` | [`%s`](%s/%s) | %s |\n' \
+          "$IMAGE" "$image_tag" "$PACKAGE_PAGE" "$architecture" "$tag" \
+          "$UPSTREAM_RELEASES" "$tag" "$size"
+      done <"$tmp_dir/platforms"
     done
   done <"$tmp_dir/tags"
 } >"$tmp_dir/table"
