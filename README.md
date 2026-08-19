@@ -71,6 +71,25 @@ environment supplied by your project.
 
 ## Build locally
 
+For a Linux host building both `amd64` and `arm64` with QEMU, register the
+binfmt handlers after each host boot:
+
+```sh
+docker run --privileged --rm tonistiigi/binfmt --install all
+docker buildx create \
+  --name rvtool-builder \
+  --driver docker-container \
+  --use \
+  --bootstrap
+docker buildx inspect --bootstrap
+```
+
+The registration lives in the host kernel and normally does not survive a
+reboot. Add the first command to the host's startup configuration, or run it
+when a temporary CI runner starts. Docker Desktop already provides the
+required emulation support. The GitHub Actions runner uses the host's existing
+Docker Buildx and binfmt setup.
+
 Choose an upstream `riscv-gnu-toolchain` Release tag and run:
 
 ```sh

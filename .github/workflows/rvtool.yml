@@ -41,7 +41,20 @@ jobs:
         env:
           IMAGE: ghcr.io/${{ github.repository_owner }}/rvtool
         run: |
-          if docker manifest inspect "$IMAGE:${{ steps.upstream.outputs.ref }}" >/dev/null 2>&1; then
+          manifest_file="$RUNNER_TEMP/rvtool-manifest.json"
+          if docker manifest inspect "$IMAGE:${{ steps.upstream.outputs.ref }}" >"$manifest_file" 2>/dev/null && \
+            python3 - "$manifest_file" <<'PY'
+          import json
+          import sys
+
+          manifest = json.load(open(sys.argv[1]))
+          platforms = {
+              (item.get("platform", {}).get("os"), item.get("platform", {}).get("architecture"))
+              for item in manifest.get("manifests", [])
+          }
+          raise SystemExit(0 if {("linux", "amd64"), ("linux", "arm64")} <= platforms else 1)
+          PY
+          then
             echo 'skip=true' >> "$GITHUB_OUTPUT"
           fi
 
@@ -50,8 +63,9 @@ jobs:
         env:
           IMAGE: ghcr.io/${{ github.repository_owner }}/rvtool
         run: |
-          docker build --network=host \
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            --network=host \
             --build-arg RISCV_GNU_TOOLCHAIN_REF=${{ steps.upstream.outputs.ref }} \
-            -t "$IMAGE:latest" -t "$IMAGE:${{ steps.upstream.outputs.ref }}" .
-          docker push "$IMAGE:latest"
-          docker push "$IMAGE:${{ steps.upstream.outputs.ref }}"
+            -t "$IMAGE:latest" -t "$IMAGE:${{ steps.upstream.outputs.ref }}" \
+            --push .
