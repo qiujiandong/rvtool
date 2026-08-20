@@ -86,6 +86,10 @@ docker buildx create \
 docker buildx inspect --bootstrap
 ```
 
+Prepare this builder on your machine before building locally. If its network is
+restricted, add `--driver-opt network=host` and the appropriate
+`env.HTTP_PROXY` and `env.HTTPS_PROXY` options when creating it.
+
 The registration lives in the host kernel and normally does not survive a
 reboot. Add the first command to the host's startup configuration, or run it
 when a temporary CI runner starts. Docker Desktop already provides the
